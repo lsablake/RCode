@@ -26,12 +26,9 @@ rankall <- function(outcome, num = "best") {
   
 ## 2. Simplify outcome column names in HospData data structure
   
-  names(HospData)[names(HospData) == 
-                    "Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack"] <- "Heart Attack"
-  names(HospData)[names(HospData) == 
-                    "Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure"] <- "Heart Failure"
-  names(HospData)[names(HospData) == 
-                    "Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia"] <- "Pneumonia"
+  names(HospData)[names(HospData) == "Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack"] <- "Heart Attack"
+  names(HospData)[names(HospData) == "Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure"] <- "Heart Failure"
+  names(HospData)[names(HospData) == "Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia"] <- "Pneumonia"
   
   
 ## 3. Validate outcome argument
@@ -45,49 +42,40 @@ rankall <- function(outcome, num = "best") {
   outcomes <- c("Heart Attack" = 11, "Heart Failure" = 17, "Pneumonia" = 23)
   
   cleanData <- na.omit(select(HospData, c(2, 7, outcomes[outcome])))
-
-  names(cleanData) = c("Hospital", "State", "Outcome")
-
+  
   
 ## 5. Standardize/clean outcome data for sorting {stringr}
   
-  cleanData$Outcome <- lapply(cleanData$Outcome, 
+  cleanData[outcome] <- lapply(cleanData[outcome], 
                               function(x) {str_pad(x, width = 4, pad = "0")})
   
   
 ## 6. Sort by outcome by Hospital within State {dplyr}
   
-  sortData <- arrange(cleanData, State, Outcome, Hospital)   
+  sortData <- arrange(cleanData, State, cleanData[outcome], Hospital.Name)   
   
   
-## 7. Sort realData data structure by state
+## 7. Sort cleanData data structure by state {base}
   
   sortData <- split(sortData, sortData$State)
   
   
-## 8. Assign numerical values to string-based inputs to the "num" parameter
+## 8. Assign numerical values to string-based inputs to the "num" parameter {base}
   
-#  num <- ifelse(num == "best", 1, ifelse(num == "worst", length(sortData), as.numeric(num)))
+  num <- ifelse(num == "best", 1, ifelse(num == "worst", length(sortData), as.numeric(num)))
 
-  for(State in levels(sortData$State)) {
-
-      stateHospitals <- sortData[sortData$State == State, ]
-    
-      ifelse(num == "best", 1, ifelse(num == "worst", nrow(stateHospitals), num))
-}
-
-
-## 9. subset row within each state by rank
+  
+## 9. subset row within each state by rank {base}
   
   Ranked <- lapply(sortData, function(x) x[num, 1])
   
   
-## 10. Break down the components of the rankResults list 
+## 10. Break down the components of the rankResults list {base}
   
   states <- c(names(Ranked))
   
   hospValues <- unlist(Ranked)
-
+  
   
 ## 11. Create dataframe to organize and report results
   
@@ -97,5 +85,4 @@ endResult
 
   
 }
-
 ## End of function
